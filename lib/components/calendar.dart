@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'database_helper.dart'; // DatabaseHelper import
+import 'database_helper.dart';
 
 class CalendarScreen extends StatefulWidget {
   @override
@@ -16,9 +16,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   void initState() {
     super.initState();
+    // _selectedDay가 null이 아닌 경우에만 메모 로드
     if (_selectedDay != null) {
       _loadMemo(_selectedDay!);
     }
+  }
+
+  @override
+  void dispose() {
+    _memoController.dispose(); // TextEditingController 해제
+    super.dispose();
   }
 
   Future<void> _loadMemo(DateTime selectedDay) async {
@@ -32,10 +39,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Future<void> _saveMemo() async {
     if (_selectedDay != null) {
       String formattedDate = _selectedDay!.toString().substring(0, 10);
-      await _dbHelper.insertMemo(formattedDate, _memoController.text);
-      setState(() {
-        // 메모 저장 후 상태 갱신
-      });
+      String? existingMemo = await _dbHelper.getMemo(formattedDate);
+      if (existingMemo != null) {
+        await _dbHelper.updateMemo(formattedDate, _memoController.text);
+      } else {
+        await _dbHelper.insertMemo(formattedDate, _memoController.text);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('메모가 저장되었습니다.')),
+      );
+      // 메모 저장 후 최신 메모 로드
       _loadMemo(_selectedDay!);
     }
   }
@@ -100,9 +113,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           ElevatedButton(
                             onPressed: () async {
                               await _saveMemo();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('메모가 저장되었습니다.')),
-                              );
                             },
                             child: Text('완료'),
                           ),
