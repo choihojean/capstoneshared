@@ -4,7 +4,6 @@ import 'components/screen1.dart';
 import 'components/screen2.dart';
 import 'components/screen3.dart';
 
-
 void main() {
   initializeDateFormatting('ko_KR', null);
   runApp(MyApp());
@@ -61,8 +60,8 @@ class _MyHomePageState extends State<MyHomePage> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+            icon: Icon(Icons.view_list),
+            label: 'List',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

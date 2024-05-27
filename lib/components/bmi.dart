@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'button_style.dart';
 
 class Bmi extends StatefulWidget {
   @override
@@ -31,7 +32,7 @@ class _BmiState extends State<Bmi> {
               decoration: InputDecoration(labelText: '몸무게 (kg)'),
             ),
             SizedBox(height: 20),
-            ElevatedButton(
+            OutlinedButton(
               onPressed: () {
                 double height = double.tryParse(heightController.text) ?? 0.0;
                 double weight = double.tryParse(weightController.text) ?? 0.0;
@@ -42,8 +43,10 @@ class _BmiState extends State<Bmi> {
                   });
                 }
               },
+              style: MyButtonStyle.outlinedButtonStyle,
               child: Text('확인'),
             ),
+            
             SizedBox(height: 20),
             Text(
               bmiResult,
