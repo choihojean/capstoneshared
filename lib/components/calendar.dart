@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'database_helper.dart';
 
 class CalendarScreen extends StatefulWidget {
   @override
@@ -9,9 +10,48 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime? _selectedDay;
+  TextEditingController _memoController = TextEditingController();
+  final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  // 날짜별 메모를 저장하는 맵
-  Map<DateTime, String> _memos = {};
+  @override
+  void initState() {
+    super.initState();
+    // _selectedDay가 null이 아닌 경우에만 메모 로드
+    if (_selectedDay != null) {
+      _loadMemo(_selectedDay!);
+    }
+  }
+
+  @override
+  void dispose() {
+    _memoController.dispose(); // TextEditingController 해제
+    super.dispose();
+  }
+
+  Future<void> _loadMemo(DateTime selectedDay) async {
+    String formattedDate = selectedDay.toString().substring(0, 10);
+    String? memo = await _dbHelper.getMemo(formattedDate);
+    setState(() {
+      _memoController.text = memo ?? '';
+    });
+  }
+
+  Future<void> _saveMemo() async {
+    if (_selectedDay != null) {
+      String formattedDate = _selectedDay!.toString().substring(0, 10);
+      String? existingMemo = await _dbHelper.getMemo(formattedDate);
+      if (existingMemo != null) {
+        await _dbHelper.updateMemo(formattedDate, _memoController.text);
+      } else {
+        await _dbHelper.insertMemo(formattedDate, _memoController.text);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('메모가 저장되었습니다.')),
+      );
+      // 메모 저장 후 최신 메모 로드
+      _loadMemo(_selectedDay!);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,6 +82,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   setState(() {
                     _selectedDay = selectedDay;
                   });
+                  _loadMemo(selectedDay);
                 },
               ),
               SizedBox(height: 20),
@@ -56,18 +97,26 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         style: TextStyle(fontSize: 18),
                       ),
                       SizedBox(height: 20),
-                      TextField(
-                        onChanged: (value) {
-                          // 메모 입력이 변경될 때마다 맵에 저장
-                          setState(() {
-                            _memos[_selectedDay!] = value;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: '여기에 기록을 작성하세요',
-                          border: OutlineInputBorder(),
-                        ),
-                        maxLines: null,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _memoController,
+                              decoration: InputDecoration(
+                                hintText: '여기에 기록을 작성하세요',
+                                border: OutlineInputBorder(),
+                              ),
+                              maxLines: null,
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          ElevatedButton(
+                            onPressed: () async {
+                              await _saveMemo();
+                            },
+                            child: Text('완료'),
+                          ),
+                        ],
                       ),
                       SizedBox(height: 20),
                       Text(
@@ -76,7 +125,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       ),
                       SizedBox(height: 10),
                       Text(
-                        _memos[_selectedDay] ?? '기록 없음',
+                        _memoController.text.isNotEmpty
+                            ? _memoController.text
+                            : '기록 없음',
                         style: TextStyle(fontSize: 16),
                       ),
                     ],
