@@ -9,19 +9,19 @@ class Screen2 extends StatelessWidget {
         children: <Widget>[
           _buildListItem(
             context,
-            image: 'assets/flutter.png',
+            image: 'assets/pullup.png',
             title: 'Item 1',
             subtitle: 'Test subtitle',
           ),
           _buildListItem(
             context,
-            image: 'assets/flutter.png',
+            image: 'assets/latpulldown.png',
             title: 'Item 2',
             subtitle: 'Test subtitle',
           ),
           _buildListItem(
             context,
-            image: 'assets/flutter.png',
+            image: 'assets/seatedrow.png',
             title: 'Item 3',
             subtitle: 'Test subtitle',
           ),
