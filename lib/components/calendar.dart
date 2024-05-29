@@ -12,13 +12,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime? _selectedDay;
   TextEditingController _memoController = TextEditingController();
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  List<Map<String, dynamic>> _memos = [];
 
   @override
   void initState() {
     super.initState();
     // _selectedDay가 null이 아닌 경우에만 메모 로드
     if (_selectedDay != null) {
-      _loadMemo(_selectedDay!);
+      _loadMemos(_selectedDay!);
     }
   }
 
@@ -28,28 +29,31 @@ class _CalendarScreenState extends State<CalendarScreen> {
     super.dispose();
   }
 
-  Future<void> _loadMemo(DateTime selectedDay) async {
+  Future<void> _loadMemos(DateTime selectedDay) async {
     String formattedDate = selectedDay.toString().substring(0, 10);
-    String? memo = await _dbHelper.getMemo(formattedDate);
+    List<Map<String, dynamic>> memos = await _dbHelper.getMemos(formattedDate);
     setState(() {
-      _memoController.text = memo ?? '';
+      _memos = memos;
     });
   }
 
   Future<void> _saveMemo() async {
     if (_selectedDay != null) {
       String formattedDate = _selectedDay!.toString().substring(0, 10);
-      String? existingMemo = await _dbHelper.getMemo(formattedDate);
-      if (existingMemo != null) {
-        await _dbHelper.updateMemo(formattedDate, _memoController.text);
-      } else {
-        await _dbHelper.insertMemo(formattedDate, _memoController.text);
-      }
+      await _dbHelper.insertMemo(formattedDate, _memoController.text);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('메모가 저장되었습니다.')),
       );
       // 메모 저장 후 최신 메모 로드
-      _loadMemo(_selectedDay!);
+      _loadMemos(_selectedDay!);
+      _memoController.clear();
+    }
+  }
+
+  Future<void> _deleteMemo(int id) async {
+    await _dbHelper.deleteMemo(id);
+    if (_selectedDay != null) {
+      _loadMemos(_selectedDay!);
     }
   }
 
@@ -82,7 +86,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   setState(() {
                     _selectedDay = selectedDay;
                   });
-                  _loadMemo(selectedDay);
+                  _loadMemos(selectedDay);
                 },
               ),
               SizedBox(height: 20),
@@ -124,12 +128,17 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         style: TextStyle(fontSize: 18),
                       ),
                       SizedBox(height: 10),
-                      Text(
-                        _memoController.text.isNotEmpty
-                            ? _memoController.text
-                            : '기록 없음',
-                        style: TextStyle(fontSize: 16),
-                      ),
+                      ..._memos.map((memo) {
+                        return ListTile(
+                          title: Text(memo['memo']),
+                          trailing: IconButton(
+                            icon: Icon(Icons.delete),
+                            onPressed: () async {
+                              await _deleteMemo(memo['id']);
+                            },
+                          ),
+                        );
+                      }).toList(),
                     ],
                   ),
                 ),
