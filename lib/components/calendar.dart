@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'database_helper.dart';
+import 'database_helper.dart'; // DatabaseHelper import
 
 class CalendarScreen extends StatefulWidget {
   @override
@@ -12,14 +12,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime? _selectedDay;
   TextEditingController _memoController = TextEditingController();
   final DatabaseHelper _dbHelper = DatabaseHelper();
-  List<Map<String, dynamic>> _memos = [];
 
   @override
   void initState() {
     super.initState();
     // _selectedDay가 null이 아닌 경우에만 메모 로드
     if (_selectedDay != null) {
-      _loadMemos(_selectedDay!);
+      _loadMemo(_selectedDay!);
     }
   }
 
@@ -29,31 +28,28 @@ class _CalendarScreenState extends State<CalendarScreen> {
     super.dispose();
   }
 
-  Future<void> _loadMemos(DateTime selectedDay) async {
+  Future<void> _loadMemo(DateTime selectedDay) async {
     String formattedDate = selectedDay.toString().substring(0, 10);
-    List<Map<String, dynamic>> memos = await _dbHelper.getMemos(formattedDate);
+    String? memo = await _dbHelper.getMemo(formattedDate);
     setState(() {
-      _memos = memos;
+      _memoController.text = memo ?? '';
     });
   }
 
   Future<void> _saveMemo() async {
     if (_selectedDay != null) {
       String formattedDate = _selectedDay!.toString().substring(0, 10);
-      await _dbHelper.insertMemo(formattedDate, _memoController.text);
+      String? existingMemo = await _dbHelper.getMemo(formattedDate);
+      if (existingMemo != null) {
+        await _dbHelper.updateMemo(formattedDate, _memoController.text);
+      } else {
+        await _dbHelper.insertMemo(formattedDate, _memoController.text);
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('메모가 저장되었습니다.')),
       );
       // 메모 저장 후 최신 메모 로드
-      _loadMemos(_selectedDay!);
-      _memoController.clear();
-    }
-  }
-
-  Future<void> _deleteMemo(int id) async {
-    await _dbHelper.deleteMemo(id);
-    if (_selectedDay != null) {
-      _loadMemos(_selectedDay!);
+      _loadMemo(_selectedDay!);
     }
   }
 
@@ -86,7 +82,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   setState(() {
                     _selectedDay = selectedDay;
                   });
-                  _loadMemos(selectedDay);
+                  _loadMemo(selectedDay);
                 },
               ),
               SizedBox(height: 20),
@@ -128,17 +124,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                         style: TextStyle(fontSize: 18),
                       ),
                       SizedBox(height: 10),
-                      ..._memos.map((memo) {
-                        return ListTile(
-                          title: Text(memo['memo']),
-                          trailing: IconButton(
-                            icon: Icon(Icons.delete),
-                            onPressed: () async {
-                              await _deleteMemo(memo['id']);
-                            },
-                          ),
-                        );
-                      }).toList(),
+                      Text(
+                        _memoController.text.isNotEmpty
+                            ? _memoController.text
+                            : '기록 없음',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ],
                   ),
                 ),
