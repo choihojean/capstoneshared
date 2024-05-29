@@ -53,6 +53,39 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
   }
 
+  void _openMemoDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('메모 작성'),
+          content: TextField(
+            controller: _memoController,
+            decoration: InputDecoration(
+              hintText: '여기에 기록을 작성하세요',
+            ),
+            maxLines: null,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await _saveMemo();
+                Navigator.of(context).pop();
+              },
+              child: Text('저장'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,6 +117,50 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   });
                   _loadMemo(selectedDay);
                 },
+                calendarBuilders: CalendarBuilders(
+                  defaultBuilder: (context, day, focusedDay) {
+                    return Center(
+                      child: Text(
+                        '${day.day}',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    );
+                  },
+                  selectedBuilder: (context, day, focusedDay) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.blue,
+                      ),
+                      margin: const EdgeInsets.all(6.0),
+                      width: 100,
+                      height: 100,
+                      child: Center(
+                        child: Text(
+                          '${day.day}',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    );
+                  },
+                  todayBuilder: (context, day, focusedDay) {
+                    return Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.orange,
+                      ),
+                      margin: const EdgeInsets.all(6.0),
+                      width: 100,
+                      height: 100,
+                      child: Center(
+                        child: Text(
+                          '${day.day}',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
               SizedBox(height: 20),
               if (_selectedDay != null) ...[
@@ -93,47 +170,89 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        '선택한 날짜: ${_selectedDay!.toString().substring(0, 10)}',
+                        '${_selectedDay!.toString().substring(0, 10)}',
                         style: TextStyle(fontSize: 18),
                       ),
                       SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _memoController,
-                              decoration: InputDecoration(
-                                hintText: '여기에 기록을 작성하세요',
-                                border: OutlineInputBorder(),
-                              ),
-                              maxLines: null,
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: Offset(0, 3),
                             ),
-                          ),
-                          SizedBox(width: 10),
-                          ElevatedButton(
-                            onPressed: () async {
-                              await _saveMemo();
-                            },
-                            child: Text('완료'),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      Text(
-                        '운동 기록:',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        _memoController.text.isNotEmpty
-                            ? _memoController.text
-                            : '기록 없음',
-                        style: TextStyle(fontSize: 16),
+                          ],
+                        ),
+                        padding: EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  '운동 기록',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                                ElevatedButton(
+                                  onPressed: _openMemoDialog,
+                                  child: Text('기록 작성'),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              _memoController.text.isNotEmpty
+                                  ? _memoController.text
+                                  : '기록 없음',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
               ],
+              SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 5,
+                        blurRadius: 7,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  padding: EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        '운동 계획',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                      SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () {
+                          // 기능 미구현
+                        },
+                        child: Text('운동 선택하기'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
